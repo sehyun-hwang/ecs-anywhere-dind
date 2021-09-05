@@ -1,0 +1,16 @@
+services:
+    docker:
+        build:
+            context: .
+        privileged: true
+        volumes:
+            - ./entrypoint.sh:/entrypoint.sh
+            - run:/var/run
+            - cpuset:/sys/fs/cgroup/cpuset
+            - lib:/var/lib
+            
+volumes:
+    run:
+    cpuset:
+    lib:
+        
