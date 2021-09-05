@@ -1,16 +1,50 @@
 services:
     docker:
-        build:
-            context: .
+        image: docker:dind
         privileged: true
+        environment:
+            - AWS_DEFAULT_REGION=ap-northeast-2
         volumes:
-            - ./entrypoint.sh:/entrypoint.sh
+            - ~/.aws:/root/.aws
+            - certs:/certs
+            - image:/var/lib/docker
+            - ssm:/var/lib/amazon/ssm
+    
+    
+    ssm-agent:
+        build:
+            context: ssm-agent
+        environment:
+            - AWS_DEFAULT_REGION=ap-northeast-2
+        volumes:
+            - ~/.aws:/root/.aws
+            - certs:/certs
+            - ssm:/var/lib/amazon/ssm
+    
+    
+    ecs-agent:
+        build:
+            context: ecs-agent
+        environment:
+            - AWS_DEFAULT_REGION=ap-northeast-2
+            - DOCKER_TLS_CERTDIR=/certs
+        volumes:
+            - ~/.aws:/root/.aws
+            - certs:/certs
             - run:/var/run
-            - cpuset:/sys/fs/cgroup/cpuset
-            - lib:/var/lib
-            
-volumes:
-    run:
-    cpuset:
-    lib:
+    
+    socat:
+        image: alpine/socat
+        working_dir: /certs/client
+        command:
+            - UNIX-LISTEN:/var/run/docker.sock,reuseaddr,fork
+            - OPENSSL-CONNECT:docker:2376,certificate=cert.pem,key=key.pem,verify=0
+        volumes:
+            - certs:/certs
+            - run:/var/run
         
+volumes:
+    certs:
+    run:
+    image:
+    ssm:
